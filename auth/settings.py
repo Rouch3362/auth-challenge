@@ -5,9 +5,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-d1cdh%@=b2*!d)r&d4^v7qsh+%yum(g=ei_@e9!p2!y2+ny!s('
 
-DEBUG = True
-
-ALLOWED_HOSTS = []
+DEBUG = False
+# it is bad practice to set allowed hosts to all hosts but for test purposes i will set it to *
+ALLOWED_HOSTS = ["*"]
 
 
 INSTALLED_APPS = [
