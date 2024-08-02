@@ -1,5 +1,5 @@
 from rest_framework.response import Response
-from .serializers import UpdateUserSerializer, OTPSerializer
+from .serializers import UpdateUserSerializer, OTPSerializer, UserSerializer
 from rest_framework.decorators import api_view
 from .models import User
 from rest_framework import status
@@ -60,9 +60,16 @@ def register(request):
         
         # create user with just phone number
         user = User.objects.create(phone_number=phone_number)
+
         # reset the lockout if they are not blocked and entered valid OTP
         restLockout(phone_number , userIp)
         message = generateMessage("user created successfully now update user information.")
+        # serialize user for response
+        userSerializer = UserSerializer(user)
+        # adding it to response message
+        message["user"] = userSerializer.data
+        # save user phone number to session so identify it later with updating it
+        request.session["phone-number"] = user.phone_number
         return Response(message, status.HTTP_201_CREATED)
         
     # if request is not valid and user forgot some fields
@@ -71,14 +78,17 @@ def register(request):
 @api_view(["PUT", "PATCH"])
 @checkIfUserIsBlocked
 def updateInfo(request):
+    # fetch the phone number from session so users can only update their account
+    if 'phone-number' not in request.session:
+        message = generateMessage("phone number not provided. first you need to verify your phone number and get an OTP code")
+        return Response(message , status.HTTP_400_BAD_REQUEST)
 
     serializer = UpdateUserSerializer(data=request.data)
 
 
     if serializer.is_valid():
         # getting phone number and format it for database
-        phone_number = serializer.validated_data["phone_number"]
-        phone_number = formatPhoneNumber(phone_number)
+        phone_number = request.session["phone-number"]
 
         # check if user exists 
         user , error = checkUserExistance(phone_number)
@@ -95,7 +105,14 @@ def updateInfo(request):
         user.set_password(serializer.validated_data["password"])
 
         user.save()
+        
         message = generateMessage("user updated successfully")
+        
+        # serialize user for response
+        userSerializer = UserSerializer(user)
+        # adding it to response message
+        message["user"] = userSerializer.data
+
         return Response(message, status.HTTP_200_OK)
 
     # if request is not valid

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from .serializers import UserLoginSerializer, VerifyPhoneNumberSerializer
+from register.serializers import UserSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from auth.middleware import checkIfUserIsBlocked
@@ -63,11 +64,22 @@ def loginUser(request):
         # extracts password from serializer
         password = serializer.validated_data["password"]
 
+        if not user.password:
+            message = generateMessage("first you should set a password for login")
+            return Response(message , status.HTTP_401_UNAUTHORIZED)
+
         # check if password is matchs with user password
         if user.check_password(password):
             # if password is right so we reset the lockout
             restLockout(phone_number , userIp)
+
             message = generateMessage("you logged in successfully")
+
+            # serialize user for response
+            userSerializer = UserSerializer(user)
+            # adding it to response message
+            message["user"] = userSerializer.data
+
             return Response(message, status.HTTP_200_OK)
         # if password is wrong one failed attempt will be added to lockout
         else:
