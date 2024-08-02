@@ -21,12 +21,12 @@ def validatePhoneNumber(phoneNumber: str):
     
 
 
-def generateError(msg):
-    error = {
+def generateMessage(msg):
+    message = {
         "message": msg,
     }
 
-    return error
+    return message
 
 
 def generateOTP(phone_number):
@@ -50,7 +50,7 @@ def checkUserExistance(phone_number):
         user = User.objects.get(phone_number=phone_number)
 
     except User.DoesNotExist:
-        error = generateError(f"User with this phone number does not exist: {phone_number}")
+        error = generateMessage(f"User with this phone number does not exist: {phone_number}")
 
         return None,Response(error, status.HTTP_404_NOT_FOUND)
     
@@ -62,12 +62,14 @@ def checkIfOtpIsValid(phone_number , code):
         otp = OTP.objects.get(phone_number=phone_number, code=code)
 
     except OTP.DoesNotExist:
-        return Response({"detail": "the OTP code is invalid."} , status.HTTP_400_BAD_REQUEST)
+        message = generateMessage("the OTP code is invalid")
+        return Response(message , status.HTTP_400_BAD_REQUEST)
     
     if timezone.now() > otp.valid_until:
         # removes expired OPT's
         otp.delete()
-        return Response({"detail": "the OTP is expired"}, status.HTTP_400_BAD_REQUEST)
+        message = generateMessage("the OTP code is expired")
+        return Response(message, status.HTTP_400_BAD_REQUEST)
     
     return None
 
@@ -79,7 +81,7 @@ def getUserIp(request):
         ip = x_forwarded.split(',')[0]
     else:
         ip = request.META.get('REMOTE_ADDR')
-        
+
     return ip
 
 
