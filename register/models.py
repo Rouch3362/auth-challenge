@@ -41,7 +41,7 @@ class User(AbstractUser):
 
     USERNAME_FIELD = "phone_number"
     REQUIRED_FIELDS = []
-    
+
     objects = UserManager()
 
 
@@ -68,22 +68,25 @@ class UserLockout(models.Model):
     failed_attempts = models.IntegerField(default=0)
     lockout_until   = models.DateTimeField(blank=True, null=True)
 
-
+    # lockout the account
     def lockOut(self):
         self.lockout_until = timezone.now()+timedelta(hours=1)
         self.save()
 
+
+    # returns a bool whethere user is blocked or not
     def isLockedOut(self):
         if self.lockout_until and self.lockout_until > timezone.now():
             return True
         
         return False
     
-
+    # increases the attempts field by one
     def increaseAttempts(self):
         self.failed_attempts += 1
         self.save()
 
+    # reset the lockout basically sets everythin to default
     def resetLockOut(self):
         self.lockout_until = None
         self.failed_attempts = 0

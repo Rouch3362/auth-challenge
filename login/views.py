@@ -15,7 +15,7 @@ from auth.utils import (
     generateMessage
 )
 
-BLOCK_MESSAGE = "you've been blocked for 1 hour"
+BLOCK_MESSAGE = "you've been blocked for 1 hour, because you've entered wrong phone number or password 3 time."
 
 @api_view(["POST"])
 @checkIfUserIsBlocked
@@ -81,17 +81,20 @@ def loginUser(request):
             message["user"] = userSerializer.data
 
             return Response(message, status.HTTP_200_OK)
+        
         # if password is wrong one failed attempt will be added to lockout
         else:
             error = lockoutAccount(
                 phone_number,
                 userIp, 
-                f"{BLOCK_MESSAGE}, because you've entered wrong phone number or password 3 time."
+                BLOCK_MESSAGE
             )
 
             if error:
                 return error
+            
             message = generateMessage("phone number or password is wrong")
             return Response(message, status.HTTP_401_UNAUTHORIZED)
+        
     # bad request errors
     return Response(serializer.errors , status.HTTP_400_BAD_REQUEST)
