@@ -6,7 +6,7 @@ from auth import utils
 class UpdateUserSerializer(serializers.Serializer):
 
     def validate(self, data):
-        utils.ValidatePhoneNumber(data["phone_number"])
+        utils.validatePhoneNumber(data["phone_number"])
         
         return data
 
