@@ -1,24 +1,24 @@
-from .models import User
+from .models import User, OTP
 from rest_framework import serializers
 from rest_framework import status
-import re
+from auth import utils
 
-class CreateUserSerializer(serializers.ModelSerializer):
+class UpdateUserSerializer(serializers.Serializer):
 
     def validate(self, data):
-        # created a regex for detecting invalid or valid phone numbers
-        phone_regex = re.compile(r"(?:(?:\+98|0098|0)9\d{9})|(?:\+98|0098|0\d{2}\d{7,8})")
-        # check if phone number is not valid
-        if not phone_regex.match(data['phone_number']):
-            # return the proper error
-            error = {
-                "phone_number": "phone number is not a valid phone number"
-            }
-
-            raise serializers.ValidationError(error, status.HTTP_400_BAD_REQUEST)
+        utils.ValidatePhoneNumber(data["phone_number"])
         
         return data
 
+    phone_number = serializers.CharField()
+    first_name   = serializers.CharField()
+    last_name    = serializers.CharField()
+    email        = serializers.EmailField()
+    password     = serializers.CharField()
+
+
+class OTPSerializer(serializers.ModelSerializer):
+    
     class Meta:
-        model = User
-        fields = ['phone_number', 'first_name', 'last_name', 'email', 'password']
+        model = OTP
+        fields = ["code" , "phone_number"]
