@@ -4,6 +4,7 @@ from register.models import OTP,User, UserLockout
 import random
 from rest_framework.response import Response
 from django.db.models import Q
+from django.utils import timezone
 
 def validatePhoneNumber(phoneNumber: str):
     # created a regex for detecting invalid or valid phone numbers
@@ -56,16 +57,29 @@ def checkUserExistance(phone_number):
     return user, None
 
 
+def checkIfOtpIsValid(phone_number , code):
+    try:
+        otp = OTP.objects.get(phone_number=phone_number, code=code)
+
+    except OTP.DoesNotExist:
+        return Response({"detail": "the OTP code is invalid."} , status.HTTP_400_BAD_REQUEST)
+    
+    if timezone.now() > otp.valid_until:
+        # removes expired OPT's
+        otp.delete()
+        return Response({"detail": "the OTP is expired"}, status.HTTP_400_BAD_REQUEST)
+    
+    return None
+
 def getUserIp(request):
     # get the HTTP_X_FORWARDED_FOR header
-    x_forwarded = request.headers.get("HTTP_X_FORWARDED_FOR")
-
+    x_forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
     # if that exist extract the ip from it
     if x_forwarded:
         ip = x_forwarded.split(',')[0]
     else:
         ip = request.META.get('REMOTE_ADDR')
-
+        
     return ip
 
 
@@ -119,4 +133,4 @@ def checkIsBlocked(phone_number, userIp):
     if lockout.isLockedOut():
         return True
     
-    restLockout(phone_number, userIp)
+    return False
