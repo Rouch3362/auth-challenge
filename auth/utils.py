@@ -71,6 +71,9 @@ def checkIfOtpIsValid(phone_number , code):
         message = generateMessage("the OTP code is expired")
         return Response(message, status.HTTP_400_BAD_REQUEST)
     
+    # delete opt codes after usage
+    otp.delete()
+    
     return None
 
 def getUserIp(request):
